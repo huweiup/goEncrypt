@@ -7,8 +7,8 @@ import (
 	"encoding/hex"
 	"runtime"
 
+	"github.com/huweiup/goEncrypt"
 	log "github.com/sirupsen/logrus"
-	"github.com/wumansgy/goEncrypt"
 )
 
 /**

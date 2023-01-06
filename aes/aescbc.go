@@ -5,10 +5,10 @@ import (
 	"crypto/cipher"
 	"encoding/base64"
 	"encoding/hex"
-	"runtime"
-
+	"fmt"
 	"github.com/huweiup/goEncrypt"
 	log "github.com/sirupsen/logrus"
+	"runtime"
 )
 
 /**
@@ -57,17 +57,19 @@ func AesCbcDecrypt(cipherText, secretKey, ivAes []byte) (plainText []byte, err e
 	if err != nil {
 		return nil, err
 	}
-
 	defer func() {
-		if err := recover(); err != nil {
-			switch err.(type) {
+		if r := recover(); r != nil {
+			switch r.(type) {
 			case runtime.Error:
-				log.Errorf("runtime err=%v,Check that the key or text is correct", err)
+				err = fmt.Errorf("runtime err=%v,Check that the key or text is correct", r)
+				//log.Errorf("runtime err=%v,Check that the key or text is correct", r)
 			default:
-				log.Errorf("error=%v,check the cipherText ", err)
+				err = fmt.Errorf("error=%v,check the cipherText ", r)
+				//log.Errorf("error=%v,check the cipherText ", r)
 			}
 		}
 	}()
+
 	var iv []byte
 	if len(ivAes) != 0 {
 		if len(ivAes) != block.BlockSize() {
@@ -78,15 +80,20 @@ func AesCbcDecrypt(cipherText, secretKey, ivAes []byte) (plainText []byte, err e
 	} else {
 		iv = []byte(goEncrypt.Ivaes)
 	}
-	blockMode := cipher.NewCBCDecrypter(block, iv)
-	paddingText := make([]byte, len(cipherText))
-	blockMode.CryptBlocks(paddingText, cipherText)
 
+	blockMode := cipher.NewCBCDecrypter(block, iv)
+
+	paddingText := make([]byte, len(cipherText))
+
+	blockMode.CryptBlocks(paddingText, cipherText)
+	fmt.Println(err)
 	plainText, err = goEncrypt.PKCS5UnPadding(paddingText, block.BlockSize())
+
 	if err != nil {
 		return nil, err
 	}
-	return plainText, nil
+
+	return plainText, err
 }
 
 func AesCbcEncryptBase64(plainText, secretKey, ivAes []byte) (cipherTextBase64 string, err error) {
